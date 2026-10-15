@@ -49,9 +49,11 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       const data = await apiFetch('/api/quizzes');
-      setQuizzes(data || []);
+      const list = Array.isArray(data) ? data : (data?.quizzes || []);
+      setQuizzes(list);
     } catch (err) {
       console.error('Failed to load quizzes:', err);
+      setQuizzes([]);
     } finally {
       setLoading(false);
     }
@@ -60,18 +62,22 @@ export default function AdminDashboard() {
   const fetchHistory = async () => {
     try {
       const data = await apiFetch('/api/sessions/history');
-      setHistory(data || []);
+      const list = Array.isArray(data) ? data : (data?.history || []);
+      setHistory(list);
     } catch (err) {
       console.error('Failed to load history:', err);
+      setHistory([]);
     }
   };
 
   const fetchUsers = async () => {
     try {
       const data = await apiFetch('/api/auth/users');
-      setUserList(data || []);
+      const list = Array.isArray(data) ? data : (data?.users || []);
+      setUserList(list);
     } catch (err) {
       console.error('Failed to load users:', err);
+      setUserList([]);
     }
   };
 
@@ -145,7 +151,10 @@ export default function AdminDashboard() {
     window.location.hash = '#/login';
   };
 
-  const pendingUsersCount = userList.filter(u => u.status === 'pending').length;
+  const safeUserList = Array.isArray(userList) ? userList : [];
+  const safeQuizzes = Array.isArray(quizzes) ? quizzes : [];
+  const safeHistory = Array.isArray(history) ? history : [];
+  const pendingUsersCount = safeUserList.filter(u => u && u.status === 'pending').length;
 
   return (
     <div className="app-container">
@@ -191,7 +200,7 @@ export default function AdminDashboard() {
               className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`}
               style={{ padding: '0.65rem 1.5rem', position: 'relative' }}
             >
-              <Users size={18} /> Admin Access & Requests ({userList.length})
+              <Users size={18} /> Admin Access & Requests ({safeUserList.length})
               {pendingUsersCount > 0 && (
                 <span style={{
                   background: '#e21b3c', color: '#fff', fontSize: '0.75rem', fontWeight: '900',
@@ -208,7 +217,7 @@ export default function AdminDashboard() {
             className={`btn ${activeTab === 'quizzes' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ padding: '0.65rem 1.5rem' }}
           >
-            <Layers size={18} /> {isSuperAdmin ? `All Quizzes (${quizzes.length})` : `My Quizzes (${quizzes.length})`}
+            <Layers size={18} /> {isSuperAdmin ? `All Quizzes (${safeQuizzes.length})` : `My Quizzes (${safeQuizzes.length})`}
           </button>
 
           <button
@@ -216,7 +225,7 @@ export default function AdminDashboard() {
             className={`btn ${activeTab === 'history' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ padding: '0.65rem 1.5rem' }}
           >
-            <FileText size={18} /> Reports & History ({history.length})
+            <FileText size={18} /> Reports & History ({safeHistory.length})
           </button>
 
           {!isSuperAdmin && (
@@ -248,7 +257,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {userList.length === 0 ? (
+            {safeUserList.length === 0 ? (
               <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center' }}>
                 <Users size={48} color="rgba(255,255,255,0.3)" style={{ margin: '0 auto 1rem' }} />
                 <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '0.5rem' }}>No Registered Admins Yet</h3>
@@ -268,7 +277,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {userList.map((u) => {
+                    {safeUserList.map((u) => {
                       const isPending = u.status === 'pending';
                       const isApproved = u.status === 'approved';
                       const isRejected = u.status === 'rejected';
@@ -366,7 +375,7 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {quizzes.length === 0 && !loading ? (
+            {safeQuizzes.length === 0 && !loading ? (
               <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center' }}>
                 <Sparkles size={48} color="#ffda6b" style={{ margin: '0 auto 1rem' }} />
                 <h3 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>
@@ -383,7 +392,7 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.5rem' }}>
-                {quizzes.map((quiz) => (
+                {safeQuizzes.map((quiz) => (
                   <div key={quiz.id} className="glass-panel animate-pop" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -462,7 +471,7 @@ export default function AdminDashboard() {
         {/* ===================================== */}
         {activeTab === 'history' && (
           <div>
-            {history.length === 0 ? (
+            {safeHistory.length === 0 ? (
               <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center' }}>
                 <Trophy size={48} color="rgba(255,255,255,0.3)" style={{ margin: '0 auto 1rem' }} />
                 <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '0.5rem' }}>
@@ -474,7 +483,7 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {history.map((h) => (
+                {safeHistory.map((h) => (
                   <div
                     key={h.id}
                     className="glass-panel"
