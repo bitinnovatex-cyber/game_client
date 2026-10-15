@@ -764,6 +764,21 @@ export default function ParticipantQuiz() {
             </div>
           )}
 
+          {!isCorrect && resultData.correctOptions && resultData.correctOptions.length > 0 && (
+            <div style={{
+              background: 'rgba(38, 137, 12, 0.25)',
+              border: '1px solid #26890c',
+              borderRadius: '12px',
+              padding: '0.65rem 1rem',
+              color: '#4ade80',
+              fontWeight: '700',
+              fontSize: '1.05rem',
+              marginBottom: '1rem'
+            }}>
+              Correct Choice: {resultData.correctOptions.map(o => o.option_text).join(', ')}
+            </div>
+          )}
+
           {resultData.streak > 1 && (
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',

@@ -72,6 +72,11 @@ export default function AdminHostLive({ sessionId }) {
         setSession(res.game);
         setPlayers(res.game.players || []);
         setGameState(res.game.state || 'lobby');
+        if (res.game.currentQuestion) {
+          setCurrentQuestion(res.game.currentQuestion);
+          setTimeLeft(res.game.timeLeft || 0);
+          setAnsweredCount(res.game.answeredCount || 0);
+        }
       } else {
         alert(res?.error || 'Could not connect to session as host');
         window.location.hash = '#/admin';
@@ -560,7 +565,8 @@ export default function AdminHostLive({ sessionId }) {
   if (gameState === 'result' && resultData) {
     const stats = resultData.answerStats || [0, 0, 0, 0];
     const maxVal = Math.max(...stats, 1);
-    const correctIds = resultData.correctOptionIds || [];
+    const correctOptions = resultData.correctOptions || [];
+    const allOptions = resultData.options || [];
 
     return (
       <div className="app-container">
@@ -593,48 +599,88 @@ export default function AdminHostLive({ sessionId }) {
 
         {/* Answer Distribution Bar Chart */}
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '1rem 3rem' }}>
-          <div className="stat-bar-container" style={{ maxWidth: '800px', width: '100%', margin: '0 auto' }}>
+          <div className="stat-bar-container" style={{ maxWidth: '850px', width: '100%', margin: '0 auto' }}>
             {stats.map((count, idx) => {
               const shapeObj = SHAPES[idx];
               const ShapeIcon = shapeObj.icon;
               const heightPercent = Math.max((count / maxVal) * 100, 15);
+              const matchingOpt = allOptions.find(o => o.color_index === idx);
+              const isCorrect = matchingOpt ? matchingOpt.is_correct : correctOptions.some(o => o.color_index === idx);
 
               return (
                 <div key={idx} className="stat-bar-column">
-                  <div style={{ fontSize: '1.3rem', fontWeight: '900', marginBottom: '0.5rem', color: '#fff' }}>
-                    {count}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.5rem' }}>
+                    {isCorrect && (
+                      <span style={{
+                        background: '#26890c',
+                        color: '#fff',
+                        borderRadius: '50%',
+                        width: '22px',
+                        height: '22px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.8rem',
+                        fontWeight: '900',
+                        boxShadow: '0 0 10px rgba(38,137,12,0.8)'
+                      }}>
+                        ✓
+                      </span>
+                    )}
+                    <span style={{ fontSize: '1.3rem', fontWeight: '900', color: isCorrect ? '#4ade80' : '#fff' }}>
+                      {count}
+                    </span>
                   </div>
                   <div
                     className={`stat-bar-fill ${shapeObj.color}`}
-                    style={{ height: `${heightPercent}%` }}
+                    style={{
+                      height: `${heightPercent}%`,
+                      border: isCorrect ? '3px solid #ffffff' : 'none',
+                      boxShadow: isCorrect ? '0 0 20px rgba(74, 222, 128, 0.6)' : 'none'
+                    }}
                   >
                     <ShapeIcon size={28} />
                   </div>
+                  {matchingOpt && (
+                    <div style={{
+                      marginTop: '0.6rem',
+                      fontSize: '0.95rem',
+                      fontWeight: '700',
+                      color: isCorrect ? '#4ade80' : 'rgba(255,255,255,0.9)',
+                      textAlign: 'center',
+                      maxWidth: '180px',
+                      wordBreak: 'break-word',
+                      lineHeight: '1.2'
+                    }}>
+                      {matchingOpt.option_text}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
 
           {/* Correct Answers Revealed */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
-            {(resultData.correctOptions || []).map((opt) => (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', marginTop: '2.5rem' }}>
+            {correctOptions.map((opt) => (
               <div
                 key={opt.id}
+                className="animate-pop"
                 style={{
                   background: '#26890c',
                   border: '2px solid #ffffff',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '12px',
+                  padding: '0.85rem 1.75rem',
+                  borderRadius: '14px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.75rem',
-                  fontSize: '1.25rem',
-                  fontWeight: '800',
-                  boxShadow: 'var(--shadow-glow)'
+                  fontSize: '1.35rem',
+                  fontWeight: '900',
+                  boxShadow: '0 0 25px rgba(38, 137, 12, 0.7)'
                 }}
               >
-                <CheckCircle size={24} />
-                <span>Correct: {opt.option_text}</span>
+                <CheckCircle size={28} />
+                <span>Correct Answer: {opt.option_text}</span>
               </div>
             ))}
           </div>
