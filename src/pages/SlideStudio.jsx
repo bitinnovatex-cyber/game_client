@@ -471,11 +471,11 @@ export default function SlideStudio({ quizId }) {
                 className="form-input"
                 style={{ width: '90px', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
               >
-                <option value={10}>10 sec</option>
-                <option value={20}>20 sec</option>
-                <option value={30}>30 sec</option>
-                <option value={60}>60 sec</option>
-                <option value={90}>90 sec</option>
+                <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={10}>10 sec</option>
+                <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={20}>20 sec</option>
+                <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={30}>30 sec</option>
+                <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={60}>60 sec</option>
+                <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={90}>90 sec</option>
               </select>
             </div>
 
@@ -489,9 +489,9 @@ export default function SlideStudio({ quizId }) {
                 className="form-input"
                 style={{ width: '110px', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
               >
-                <option value={1000}>Standard (1000)</option>
-                <option value={2000}>Double (2000)</option>
-                <option value={0}>No Points (0)</option>
+                <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={1000}>Standard (1000)</option>
+                <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={2000}>Double (2000)</option>
+                <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={0}>No Points (0)</option>
               </select>
             </div>
           </div>
@@ -628,10 +628,17 @@ export default function SlideStudio({ quizId }) {
                     onChange={(e) => setAiCount(parseInt(e.target.value, 10))}
                     className="form-input"
                   >
-                    <option value={3}>3 Questions</option>
-                    <option value={5}>5 Questions</option>
-                    <option value={8}>8 Questions</option>
-                    <option value={10}>10 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={3}>3 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={5}>5 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={10}>10 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={15}>15 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={20}>20 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={25}>25 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={30}>30 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={35}>35 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={40}>40 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={45}>45 Questions</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value={50}>50 Questions</option>
                   </select>
                 </div>
 
@@ -644,8 +651,8 @@ export default function SlideStudio({ quizId }) {
                     onChange={(e) => setAiType(e.target.value)}
                     className="form-input"
                   >
-                    <option value="quiz_4">4-Choice Multiple Choice</option>
-                    <option value="quiz_2">2-Choice True / False</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value="quiz_4">4-Choice Multiple Choice</option>
+                    <option style={{ color: '#111827', backgroundColor: '#ffffff', fontWeight: 600 }} value="quiz_2">2-Choice True / False</option>
                   </select>
                 </div>
               </div>

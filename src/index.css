@@ -498,6 +498,20 @@ body {
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
+select.form-input {
+  background-color: #25076b;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+select.form-input option,
+option {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  font-weight: 600;
+  padding: 0.5rem;
+}
+
 /* Badge */
 .streak-badge {
   background: linear-gradient(90deg, #ff8c00, #ff0055);
