@@ -126,9 +126,7 @@ export default function ParticipantQuiz() {
           if (res && res.success) {
             console.log('[Socket] Re-attached successfully:', res);
             setJoinedPlayer(res.player);
-            if (res.gameState && res.gameState !== 'lobby') {
-              setGameState(res.gameState);
-            }
+            setGameState(res.gameState || 'lobby');
             if (res.currentQuestion) {
               setCurrentQuestion(res.currentQuestion);
               setTimeLeft(res.timeLeft || 0);
@@ -263,9 +261,7 @@ export default function ParticipantQuiz() {
     }, (res) => {
       if (res && res.success) {
         setJoinedPlayer(res.player);
-        if (res.gameState && res.gameState !== 'lobby') {
-          setGameState(res.gameState);
-        }
+        setGameState(res.gameState || 'lobby');
         if (res.currentQuestion) {
           setCurrentQuestion(res.currentQuestion);
           setTimeLeft(res.timeLeft || 0);
@@ -295,7 +291,7 @@ export default function ParticipantQuiz() {
 
     const socket = getSocket();
     socket.emit('submit-answer', {
-      sessionId: activeQuizInfo.id,
+      sessionId: activeQuizInfo?.id || joinedPlayer?.sessionId,
       playerId: joinedPlayer?.id,
       optionId
     }, (res) => {
@@ -345,7 +341,7 @@ export default function ParticipantQuiz() {
   // ==========================================
   // RENDER: 1. NO ACTIVE QUIZ
   // ==========================================
-  if (!activeQuizInfo || (!joinedPlayer && gameState === 'idle')) {
+  if (!joinedPlayer && !activeQuizInfo && !loadingActive) {
     return (
       <div className="app-container" style={{ justifyContent: 'space-between' }}>
         <header className="navbar">
@@ -403,6 +399,23 @@ export default function ParticipantQuiz() {
     );
   }
 
+  // Loading state while checking active quiz
+  if (!joinedPlayer && !activeQuizInfo && loadingActive) {
+    return (
+      <div className="app-container" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
+        <div className="glass-panel animate-pop" style={{ maxWidth: '440px', width: '100%', padding: '3rem 2rem' }}>
+          <RefreshCw size={36} className="spin" style={{ color: '#ffda6b', margin: '0 auto 1.25rem' }} />
+          <h2 style={{ fontSize: '1.6rem', fontWeight: '900', marginBottom: '0.5rem' }}>
+            Looking for Live Quiz...
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+            Connecting to host session...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // ==========================================
   // RENDER: 2. ENTER NICKNAME TO JOIN
   // ==========================================
@@ -412,7 +425,7 @@ export default function ParticipantQuiz() {
         <header className="navbar">
           <div className="brand-logo">
             <span>Kahoot!</span>
-            <span className="brand-badge">PIN: {activeQuizInfo.pin}</span>
+            <span className="brand-badge">PIN: {activeQuizInfo?.pin || '---'}</span>
           </div>
           <SoundToggle />
         </header>
@@ -421,7 +434,7 @@ export default function ParticipantQuiz() {
           <div className="glass-panel animate-pop" style={{ maxWidth: '440px', width: '100%', padding: '2.5rem 2rem', textAlign: 'center' }}>
             <div style={{ display: 'inline-flex', padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', borderRadius: '20px', marginBottom: '1.25rem' }}>
               <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#ffda6b' }}>
-                🎯 Live Quiz: {activeQuizInfo.quizTitle}
+                🎯 Live Quiz: {activeQuizInfo?.quizTitle || 'Live Quiz'}
               </span>
             </div>
 
@@ -477,7 +490,7 @@ export default function ParticipantQuiz() {
   // ==========================================
   // RENDER: 3. LOBBY WAITING SCREEN
   // ==========================================
-  if (gameState === 'lobby') {
+  if (gameState === 'lobby' || (joinedPlayer && gameState === 'idle')) {
     return (
       <div className="app-container">
         <header className="navbar">
@@ -486,7 +499,7 @@ export default function ParticipantQuiz() {
             <span className="brand-badge">Lobby</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontWeight: '700', color: '#ffda6b' }}>👤 {joinedPlayer.nickname}</span>
+            <span style={{ fontWeight: '700', color: '#ffda6b' }}>👤 {joinedPlayer?.nickname}</span>
             <SoundToggle />
           </div>
         </header>
@@ -510,10 +523,10 @@ export default function ParticipantQuiz() {
 
             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
               <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#ffffff' }}>
-                {joinedPlayer.nickname}
+                {joinedPlayer?.nickname}
               </div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                Game PIN: <strong>{activeQuizInfo.pin}</strong>
+                Game PIN: <strong>{activeQuizInfo?.pin || joinedPlayer?.pin || '---'}</strong>
               </div>
             </div>
 
@@ -559,7 +572,7 @@ export default function ParticipantQuiz() {
   // ==========================================
   // RENDER: 5. ACTIVE QUESTION (4 OR 2 BUTTONS)
   // ==========================================
-  if (gameState === 'question') {
+  if (gameState === 'question' || gameState === 'active') {
     const options = currentQuestion?.options || [];
     const isTwoChoice = options.length === 2;
 
@@ -568,8 +581,8 @@ export default function ParticipantQuiz() {
         {/* Top Header */}
         <header className="navbar" style={{ padding: '0.75rem 1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontWeight: '800', fontSize: '1.1rem' }}>Q{currentQuestion.questionIndex + 1}</span>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>/ {currentQuestion.totalQuestions}</span>
+            <span style={{ fontWeight: '800', fontSize: '1.1rem' }}>Q{(currentQuestion?.questionIndex || 0) + 1}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>/ {currentQuestion?.totalQuestions || ''}</span>
           </div>
 
           {/* Central Timer Ring */}
@@ -585,7 +598,7 @@ export default function ParticipantQuiz() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontWeight: '700', color: '#ffda6b' }}>{joinedPlayer.nickname}</span>
+            <span style={{ fontWeight: '700', color: '#ffda6b' }}>{joinedPlayer?.nickname}</span>
             <SoundToggle />
           </div>
         </header>
@@ -594,7 +607,7 @@ export default function ParticipantQuiz() {
         <div style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
           <div className="glass-panel" style={{ padding: '1.25rem', maxWidth: '850px', margin: '0 auto' }}>
             <h2 style={{ fontSize: '1.45rem', fontWeight: '800', lineHeight: '1.4' }}>
-              {currentQuestion.questionText}
+              {currentQuestion?.questionText || 'Look at the main screen for the question!'}
             </h2>
           </div>
         </div>
@@ -674,7 +687,18 @@ export default function ParticipantQuiz() {
   // ==========================================
   // RENDER: 7. QUESTION RESULT REVEAL
   // ==========================================
-  if (gameState === 'result' && resultData) {
+  if (gameState === 'result') {
+    if (!resultData) {
+      return (
+        <div className="app-container" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
+          <div className="glass-panel animate-pop" style={{ maxWidth: '440px', width: '100%', padding: '3rem 2rem' }}>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '900', marginBottom: '0.75rem' }}>Time's Up!</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>Calculating scores...</p>
+          </div>
+        </div>
+      );
+    }
+
     const isCorrect = resultData.isCorrect;
 
     return (
@@ -745,7 +769,18 @@ export default function ParticipantQuiz() {
   // ==========================================
   // RENDER: 8. SCOREBOARD / LEADERBOARD
   // ==========================================
-  if (gameState === 'leaderboard' && leaderboardData) {
+  if (gameState === 'leaderboard') {
+    if (!leaderboardData) {
+      return (
+        <div className="app-container" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
+          <div className="glass-panel animate-pop" style={{ maxWidth: '440px', width: '100%', padding: '3rem 2rem' }}>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '900', marginBottom: '0.75rem' }}>Scoreboard</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>Updating standings...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="app-container">
         <header className="navbar">
@@ -815,7 +850,19 @@ export default function ParticipantQuiz() {
   // ==========================================
   // RENDER: 9. FINAL PODIUM / GAME OVER
   // ==========================================
-  if (gameState === 'podium' && podiumData) {
+  if (gameState === 'podium' || gameState === 'finished') {
+    if (!podiumData) {
+      return (
+        <div className="app-container" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
+          <div className="glass-panel animate-pop" style={{ maxWidth: '440px', width: '100%', padding: '3rem 2rem' }}>
+            <Trophy size={48} color="#ffd700" style={{ margin: '0 auto 1.25rem' }} />
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '900', marginBottom: '0.75rem' }}>Quiz Finished!</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>Look at the big screen for final podium winners!</p>
+          </div>
+        </div>
+      );
+    }
+
     const myRank = podiumData.podium?.findIndex(p => p.id === joinedPlayer?.id);
     const placedOnPodium = myRank !== -1 && myRank !== undefined;
 
@@ -839,7 +886,7 @@ export default function ParticipantQuiz() {
 
           <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
             <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#ffda6b', marginBottom: '0.5rem' }}>
-              {joinedPlayer.nickname}
+              {joinedPlayer?.nickname}
             </div>
             <div style={{ fontSize: '1.8rem', fontWeight: '900', marginBottom: '1rem' }}>
               {placedOnPodium ? `Place #${myRank + 1} on the Podium!` : 'Great participation!'}
@@ -851,6 +898,7 @@ export default function ParticipantQuiz() {
 
           <button
             onClick={() => {
+              sessionStorage.removeItem('kahoot_active_player');
               setGameState('idle');
               setJoinedPlayer(null);
             }}
@@ -864,5 +912,32 @@ export default function ParticipantQuiz() {
     );
   }
 
-  return null;
+  // ==========================================
+  // UNIVERSAL FALLBACK: NEVER RENDER BLANK PURPLE SCREEN
+  // ==========================================
+  return (
+    <div className="app-container" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
+      <div className="glass-panel animate-pop" style={{ maxWidth: '440px', width: '100%', padding: '2.5rem 2rem' }}>
+        <RefreshCw size={36} className="spin" style={{ color: '#ffda6b', margin: '0 auto 1.25rem' }} />
+        <h2 style={{ fontSize: '1.6rem', fontWeight: '900', marginBottom: '0.5rem' }}>
+          Connecting to Game...
+        </h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
+          {joinedPlayer ? `Joined as ${joinedPlayer.nickname}. Waiting for host...` : 'Connecting to host session...'}
+        </p>
+        <button 
+          onClick={() => {
+            sessionStorage.removeItem('kahoot_active_player');
+            setJoinedPlayer(null);
+            setGameState('idle');
+            checkActiveQuiz();
+          }}
+          className="btn btn-secondary"
+          style={{ width: '100%' }}
+        >
+          Reset Connection
+        </button>
+      </div>
+    </div>
+  );
 }
