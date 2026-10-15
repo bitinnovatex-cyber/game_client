@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../api';
+import { apiFetch, getUserFromToken } from '../api';
 import sound from '../soundEngine';
 import SoundToggle from '../components/SoundToggle';
 import { 
@@ -21,7 +21,8 @@ import {
   CheckCircle,
   Image as ImageIcon,
   Loader2,
-  X
+  X,
+  ShieldAlert
 } from 'lucide-react';
 
 const SHAPES = [
@@ -46,6 +47,9 @@ const DEFAULT_QUESTION = () => ({
 });
 
 export default function SlideStudio({ quizId }) {
+  const currentUser = getUserFromToken();
+  const isSuperAdmin = currentUser?.role === 'superadmin';
+
   const [title, setTitle] = useState('New Quiz');
   const [description, setDescription] = useState('');
   const [slides, setSlides] = useState([DEFAULT_QUESTION()]);
@@ -270,6 +274,25 @@ export default function SlideStudio({ quizId }) {
       <div className="app-container" style={{ alignItems: 'center', justifyContent: 'center' }}>
         <Loader2 size={40} className="spin" color="#fff" />
         <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Loading presentation slides...</p>
+      </div>
+    );
+  }
+
+  if (isSuperAdmin) {
+    return (
+      <div className="app-container" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
+        <div className="glass-panel animate-pop" style={{ maxWidth: '480px', width: '100%', padding: '2.5rem 2rem' }}>
+          <ShieldAlert size={48} color="#ffd700" style={{ margin: '0 auto 1.25rem' }} />
+          <h2 style={{ fontSize: '1.6rem', fontWeight: '900', marginBottom: '0.75rem', color: '#ffd700' }}>
+            Super Admin Read-Only
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '2rem' }}>
+            Super Admin has read-only access to all quizzes. Quiz creation and editing is managed by individual Admin accounts.
+          </p>
+          <a href="#/admin" className="btn btn-primary" style={{ width: '100%' }}>
+            Return to Dashboard
+          </a>
+        </div>
       </div>
     );
   }

@@ -1,7 +1,7 @@
-// Version 1.0 - Stable Baseline Release
 import React, { useState, useEffect } from 'react';
 import ParticipantQuiz from './pages/ParticipantQuiz';
 import AdminLogin from './pages/AdminLogin';
+import AdminSignup from './pages/AdminSignup';
 import AdminDashboard from './pages/AdminDashboard';
 import SlideStudio from './pages/SlideStudio';
 import AdminHostLive from './pages/AdminHostLive';
@@ -15,6 +15,9 @@ export default function App() {
     const hash = window.location.hash.replace(/^#/, '');
     const path = hash || window.location.pathname;
 
+    if (path.startsWith('/signup')) {
+      return { page: 'signup' };
+    }
     if (path.startsWith('/login')) {
       return { page: 'login' };
     }
@@ -57,6 +60,8 @@ export default function App() {
   }
 
   switch (currentRoute.page) {
+    case 'signup':
+      return <AdminSignup />;
     case 'login':
       return <AdminLogin />;
     case 'admin':

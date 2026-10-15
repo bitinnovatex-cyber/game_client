@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch, clearToken } from '../api';
+import { apiFetch, clearToken, getUserFromToken } from '../api';
 import sound from '../soundEngine';
 import SoundToggle from '../components/SoundToggle';
 import { 
@@ -18,22 +18,32 @@ import {
   Eye, 
   X,
   Sparkles,
-  Calendar,
-  Award
+  Shield,
+  ShieldCheck,
+  UserCheck,
+  UserX,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('quizzes'); // 'quizzes' | 'history'
+  const currentUser = getUserFromToken();
+  const isSuperAdmin = currentUser?.role === 'superadmin';
+
+  const [activeTab, setActiveTab] = useState(isSuperAdmin ? 'users' : 'quizzes'); // 'users' | 'quizzes' | 'history'
   const [quizzes, setQuizzes] = useState([]);
   const [history, setHistory] = useState([]);
+  const [userList, setUserList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState(null);
-  const [loadingReport, setLoadingReport] = useState(false);
+  const [updatingUserId, setUpdatingUserId] = useState(null);
 
   useEffect(() => {
     fetchQuizzes();
     fetchHistory();
-  }, []);
+    if (isSuperAdmin) {
+      fetchUsers();
+    }
+  }, [isSuperAdmin]);
 
   const fetchQuizzes = async () => {
     try {
@@ -56,7 +66,38 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const data = await apiFetch('/api/auth/users');
+      setUserList(data || []);
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    }
+  };
+
+  const handleUpdateUserStatus = async (userId, newStatus) => {
+    sound.playSelect();
+    setUpdatingUserId(userId);
+    try {
+      await apiFetch(`/api/auth/users/${userId}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus })
+      });
+      sound.playCorrect();
+      fetchUsers();
+    } catch (err) {
+      sound.playWrong();
+      alert('Failed to update status: ' + err.message);
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
   const handleHostQuiz = async (quizId) => {
+    if (isSuperAdmin) {
+      alert('Super Admin has read-only access. Please log in with a standard Admin account to host live quizzes.');
+      return;
+    }
     sound.init();
     sound.playSelect();
     try {
@@ -73,6 +114,10 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteQuiz = async (quizId, title) => {
+    if (isSuperAdmin) {
+      alert('Super Admin has read-only access. Quiz deletion is restricted to the quiz owner.');
+      return;
+    }
     if (confirm(`Are you sure you want to delete "${title}"?`)) {
       try {
         await apiFetch(`/api/quizzes/${quizId}`, { method: 'DELETE' });
@@ -86,14 +131,11 @@ export default function AdminDashboard() {
 
   const handleViewReport = async (sessionId) => {
     sound.playSelect();
-    setLoadingReport(true);
     try {
       const data = await apiFetch(`/api/sessions/${sessionId}/report`);
       setSelectedReport(data);
     } catch (err) {
       alert('Failed to load report: ' + err.message);
-    } finally {
-      setLoadingReport(false);
     }
   };
 
@@ -103,21 +145,27 @@ export default function AdminDashboard() {
     window.location.hash = '#/login';
   };
 
+  const pendingUsersCount = userList.filter(u => u.status === 'pending').length;
+
   return (
     <div className="app-container">
       {/* Top Navbar */}
       <header className="navbar">
         <div className="brand-logo">
           <span>PS SkillSift</span>
-          <span className="brand-badge">Host Hub</span>
+          <span className="brand-badge">{isSuperAdmin ? 'Super Admin' : 'Admin Hub'}</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{
-            background: 'rgba(255,255,255,0.12)', padding: '0.4rem 0.9rem',
-            borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', color: '#ffda6b'
+            background: isSuperAdmin ? 'linear-gradient(135deg, rgba(255,215,0,0.25), rgba(216,158,0,0.15))' : 'rgba(255,255,255,0.12)',
+            border: isSuperAdmin ? '1px solid rgba(255,215,0,0.4)' : '1px solid rgba(255,255,255,0.15)',
+            padding: '0.4rem 0.9rem',
+            borderRadius: '20px', fontSize: '0.85rem', fontWeight: '800', color: isSuperAdmin ? '#ffd700' : '#ffda6b',
+            display: 'flex', alignItems: 'center', gap: '0.4rem'
           }}>
-            👤 Admin
+            {isSuperAdmin ? <ShieldCheck size={16} /> : <Shield size={16} />}
+            {isSuperAdmin ? '👑 Super Admin' : (currentUser?.email ? `👤 ${currentUser.email}` : '👤 Admin')}
           </div>
 
           <SoundToggle />
@@ -136,13 +184,31 @@ export default function AdminDashboard() {
       {/* Main Container */}
       <main style={{ flex: 1, padding: '2rem', maxWidth: '1200px', width: '100%', margin: '0 auto' }}>
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          {isSuperAdmin && (
+            <button
+              onClick={() => { setActiveTab('users'); sound.playTick(); }}
+              className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '0.65rem 1.5rem', position: 'relative' }}
+            >
+              <Users size={18} /> Admin Access & Requests ({userList.length})
+              {pendingUsersCount > 0 && (
+                <span style={{
+                  background: '#e21b3c', color: '#fff', fontSize: '0.75rem', fontWeight: '900',
+                  padding: '2px 8px', borderRadius: '10px', marginLeft: '6px'
+                }}>
+                  {pendingUsersCount} pending
+                </span>
+              )}
+            </button>
+          )}
+
           <button
             onClick={() => { setActiveTab('quizzes'); sound.playTick(); }}
             className={`btn ${activeTab === 'quizzes' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ padding: '0.65rem 1.5rem' }}
           >
-            <Layers size={18} /> My Quizzes ({quizzes.length})
+            <Layers size={18} /> {isSuperAdmin ? `All Quizzes (${quizzes.length})` : `My Quizzes (${quizzes.length})`}
           </button>
 
           <button
@@ -150,51 +216,191 @@ export default function AdminDashboard() {
             className={`btn ${activeTab === 'history' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ padding: '0.65rem 1.5rem' }}
           >
-            <FileText size={18} /> Reports & Student History ({history.length})
+            <FileText size={18} /> Reports & History ({history.length})
           </button>
 
-          <div style={{ marginLeft: 'auto' }}>
-            <a
-              href="#/admin/create"
-              onClick={() => sound.playSelect()}
-              className="btn btn-accent"
-              style={{ padding: '0.65rem 1.5rem' }}
-            >
-              <Plus size={18} /> Create New Quiz
-            </a>
-          </div>
+          {!isSuperAdmin && (
+            <div style={{ marginLeft: 'auto' }}>
+              <a
+                href="#/admin/create"
+                onClick={() => sound.playSelect()}
+                className="btn btn-accent"
+                style={{ padding: '0.65rem 1.5rem' }}
+              >
+                <Plus size={18} /> Create New Quiz
+              </a>
+            </div>
+          )}
         </div>
+
+        {/* ===================================== */}
+        {/* SUPER ADMIN: USER APPROVAL TAB */}
+        {/* ===================================== */}
+        {isSuperAdmin && activeTab === 'users' && (
+          <div>
+            <div className="glass-panel" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(70, 23, 143, 0.35)', border: '1px solid rgba(134, 76, 191, 0.4)' }}>
+              <ShieldCheck size={24} color="#ffd700" style={{ flexShrink: 0 }} />
+              <div>
+                <strong style={{ color: '#ffd700', fontSize: '1rem' }}>Super Admin Authorization Control</strong>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: '2px 0 0' }}>
+                  Review and approve or reject admin registration requests. Only approved users can log in and create quizzes.
+                </p>
+              </div>
+            </div>
+
+            {userList.length === 0 ? (
+              <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center' }}>
+                <Users size={48} color="rgba(255,255,255,0.3)" style={{ margin: '0 auto 1rem' }} />
+                <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '0.5rem' }}>No Registered Admins Yet</h3>
+                <p style={{ color: 'var(--text-muted)' }}>
+                  Prospective quiz hosts can register via the Sign Up page. When they register, their requests will appear here for your review.
+                </p>
+              </div>
+            ) : (
+              <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.03)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.92rem' }}>
+                  <thead style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <tr>
+                      <th style={{ padding: '1rem 1.25rem' }}>Admin Email</th>
+                      <th style={{ padding: '1rem 1.25rem' }}>Requested Date</th>
+                      <th style={{ padding: '1rem 1.25rem' }}>Current Status</th>
+                      <th style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userList.map((u) => {
+                      const isPending = u.status === 'pending';
+                      const isApproved = u.status === 'approved';
+                      const isRejected = u.status === 'rejected';
+
+                      return (
+                        <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                          <td style={{ padding: '1rem 1.25rem', fontWeight: '700' }}>
+                            {u.email}
+                          </td>
+                          <td style={{ padding: '1rem 1.25rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                            {new Date(u.created_at).toLocaleString()}
+                          </td>
+                          <td style={{ padding: '1rem 1.25rem' }}>
+                            {isPending && (
+                              <span style={{
+                                background: 'rgba(216, 158, 0, 0.25)', color: '#ffda6b',
+                                border: '1px solid #d89e00', padding: '0.25rem 0.75rem',
+                                borderRadius: '12px', fontSize: '0.8rem', fontWeight: '800', display: 'inline-flex', alignItems: 'center', gap: '0.35rem'
+                              }}>
+                                <Clock size={13} /> Waiting Approval
+                              </span>
+                            )}
+                            {isApproved && (
+                              <span style={{
+                                background: 'rgba(38, 137, 12, 0.25)', color: '#66ee88',
+                                border: '1px solid #26890c', padding: '0.25rem 0.75rem',
+                                borderRadius: '12px', fontSize: '0.8rem', fontWeight: '800', display: 'inline-flex', alignItems: 'center', gap: '0.35rem'
+                              }}>
+                                <CheckCircle size={13} /> Approved
+                              </span>
+                            )}
+                            {isRejected && (
+                              <span style={{
+                                background: 'rgba(226, 27, 60, 0.25)', color: '#ff8899',
+                                border: '1px solid #e21b3c', padding: '0.25rem 0.75rem',
+                                borderRadius: '12px', fontSize: '0.8rem', fontWeight: '800', display: 'inline-flex', alignItems: 'center', gap: '0.35rem'
+                              }}>
+                                <XCircle size={13} /> Rejected
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
+                              {!isApproved && (
+                                <button
+                                  disabled={updatingUserId === u.id}
+                                  onClick={() => handleUpdateUserStatus(u.id, 'approved')}
+                                  className="btn"
+                                  style={{
+                                    background: '#26890c', color: '#fff', padding: '0.45rem 0.85rem',
+                                    fontSize: '0.85rem', borderRadius: '6px'
+                                  }}
+                                  title="Approve access"
+                                >
+                                  <UserCheck size={16} /> Approve
+                                </button>
+                              )}
+                              {!isRejected && (
+                                <button
+                                  disabled={updatingUserId === u.id}
+                                  onClick={() => handleUpdateUserStatus(u.id, 'rejected')}
+                                  className="btn btn-secondary"
+                                  style={{
+                                    color: '#ff8899', borderColor: '#e21b3c', padding: '0.45rem 0.85rem',
+                                    fontSize: '0.85rem', borderRadius: '6px'
+                                  }}
+                                  title="Reject access"
+                                >
+                                  <UserX size={16} /> Reject
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ===================================== */}
         {/* TAB 1: QUIZZES */}
         {/* ===================================== */}
         {activeTab === 'quizzes' && (
           <div>
+            {isSuperAdmin && (
+              <div className="glass-panel" style={{ padding: '1rem 1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.65rem', background: 'rgba(19, 104, 206, 0.2)', border: '1px solid rgba(19, 104, 206, 0.4)' }}>
+                <AlertTriangle size={20} color="#77b5fe" style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: '0.88rem', color: '#cfe3ff' }}>
+                  <strong>Super Admin Read-Only Mode:</strong> You can view all quizzes and see who created each quiz. Direct editing and hosting is reserved for individual quiz owners.
+                </span>
+              </div>
+            )}
+
             {quizzes.length === 0 && !loading ? (
               <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center' }}>
                 <Sparkles size={48} color="#ffda6b" style={{ margin: '0 auto 1rem' }} />
                 <h3 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>
-                  No Quizzes Created Yet
+                  No Quizzes Found
                 </h3>
                 <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Create your first quiz with custom questions or generate them with Gemini AI in seconds!
+                  {isSuperAdmin ? 'No users have created any quizzes yet.' : 'Create your first quiz with custom questions or generate them with Gemini AI in seconds!'}
                 </p>
-                <a href="#/admin/create" className="btn btn-primary" style={{ padding: '0.75rem 2rem' }}>
-                  <Plus size={18} /> Create First Quiz
-                </a>
+                {!isSuperAdmin && (
+                  <a href="#/admin/create" className="btn btn-primary" style={{ padding: '0.75rem 2rem' }}>
+                    <Plus size={18} /> Create First Quiz
+                  </a>
+                )}
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.5rem' }}>
                 {quizzes.map((quiz) => (
                   <div key={quiz.id} className="glass-panel animate-pop" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <span style={{
                           background: 'rgba(255,255,255,0.15)', padding: '0.25rem 0.65rem',
                           borderRadius: '12px', fontSize: '0.8rem', fontWeight: '800', color: '#ffda6b'
                         }}>
                           {quiz.question_count || 0} Slides
                         </span>
+                        {isSuperAdmin && (
+                          <span style={{
+                            background: 'rgba(134, 76, 191, 0.3)', border: '1px solid rgba(134, 76, 191, 0.5)',
+                            padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', color: '#e0b8ff'
+                          }}>
+                            👤 {quiz.creator_email || 'Admin'}
+                          </span>
+                        )}
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                           {new Date(quiz.updated_at).toLocaleDateString()}
                         </span>
@@ -210,34 +416,40 @@ export default function AdminDashboard() {
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
-                      <button
-                        onClick={() => handleHostQuiz(quiz.id)}
-                        className="btn btn-primary"
-                        style={{ flex: 1, padding: '0.65rem 1rem', fontSize: '0.95rem' }}
-                      >
-                        <Play size={16} fill="#25076b" /> Host Live
-                      </button>
+                    {!isSuperAdmin ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
+                        <button
+                          onClick={() => handleHostQuiz(quiz.id)}
+                          className="btn btn-primary"
+                          style={{ flex: 1, padding: '0.65rem 1rem', fontSize: '0.95rem' }}
+                        >
+                          <Play size={16} fill="#25076b" /> Host Live
+                        </button>
 
-                      <a
-                        href={`#/admin/edit/${quiz.id}`}
-                        onClick={() => sound.playSelect()}
-                        className="btn btn-secondary"
-                        style={{ padding: '0.65rem 0.9rem' }}
-                        title="Edit Slides"
-                      >
-                        <Edit3 size={16} />
-                      </a>
+                        <a
+                          href={`#/admin/edit/${quiz.id}`}
+                          onClick={() => sound.playSelect()}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.65rem 0.9rem' }}
+                          title="Edit Slides"
+                        >
+                          <Edit3 size={16} />
+                        </a>
 
-                      <button
-                        onClick={() => handleDeleteQuiz(quiz.id, quiz.title)}
-                        className="btn btn-secondary"
-                        style={{ padding: '0.65rem 0.9rem', color: '#ff7777' }}
-                        title="Delete Quiz"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                        <button
+                          onClick={() => handleDeleteQuiz(quiz.id, quiz.title)}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.65rem 0.9rem', color: '#ff7777' }}
+                          title="Delete Quiz"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                        Created by: <strong style={{ color: '#ffda6b' }}>{quiz.creator_email || 'Admin'}</strong>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -257,7 +469,7 @@ export default function AdminDashboard() {
                   No Completed Sessions Yet
                 </h3>
                 <p style={{ color: 'var(--text-muted)' }}>
-                  Once you host and finish a live quiz, student attendance, choices, and scores will be stored here.
+                  Once a live quiz is hosted and finished, student attendance, choices, and scores will be stored here.
                 </p>
               </div>
             ) : (
@@ -270,14 +482,21 @@ export default function AdminDashboard() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '1.25rem 1.75rem'
+                      padding: '1.25rem 1.75rem',
+                      flexWrap: 'wrap',
+                      gap: '1rem'
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '0.25rem' }}>
-                        {h.quiz_title}
+                      <div style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <span>{h.quiz_title}</span>
+                        {isSuperAdmin && h.creator_email && (
+                          <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', background: 'rgba(134,76,191,0.3)', borderRadius: '10px', color: '#ffda6b', fontWeight: '700' }}>
+                            by {h.creator_email}
+                          </span>
+                        )}
                       </div>
-                      <div style={{ display: 'flex', gap: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                      <div style={{ display: 'flex', gap: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem', flexWrap: 'wrap' }}>
                         <span>PIN: <strong>{h.pin}</strong></span>
                         <span>Date: {new Date(h.started_at).toLocaleString()}</span>
                         <span>Players: <strong>{h.total_players}</strong></span>

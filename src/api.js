@@ -37,6 +37,25 @@ export function clearToken() {
   localStorage.removeItem('kahoot_admin_token');
 }
 
+export function getUserFromToken() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      // Decode base64url safely
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+}
+
 export async function apiFetch(path, options = {}) {
   const headers = {
     'Content-Type': 'application/json',

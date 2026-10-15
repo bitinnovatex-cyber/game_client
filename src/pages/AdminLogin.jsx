@@ -5,8 +5,8 @@ import SoundToggle from '../components/SoundToggle';
 import { Lock, User, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -35,12 +35,14 @@ export default function AdminLogin() {
     }
   };
 
+  const isPendingError = error.toLowerCase().includes('pending') || error.toLowerCase().includes('approval');
+
   return (
     <div className="app-container">
       <header className="navbar">
         <a href="#/" className="brand-logo">
           <span>PS SkillSift</span>
-          <span className="brand-badge">Admin</span>
+          <span className="brand-badge">Admin Portal</span>
         </a>
         <SoundToggle />
       </header>
@@ -64,11 +66,13 @@ export default function AdminLogin() {
 
           {error && (
             <div style={{
-              background: 'rgba(226, 27, 60, 0.25)', border: '1px solid #e21b3c',
-              color: '#ff99aa', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.25rem',
-              fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
+              background: isPendingError ? 'rgba(216, 158, 0, 0.2)' : 'rgba(226, 27, 60, 0.25)',
+              border: `1px solid ${isPendingError ? '#d89e00' : '#e21b3c'}`,
+              color: isPendingError ? '#ffda6b' : '#ff99aa',
+              padding: '0.85rem', borderRadius: '8px', marginBottom: '1.25rem',
+              fontSize: '0.88rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem', lineHeight: '1.4'
             }}>
-              <AlertCircle size={18} />
+              <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
               <span>{error}</span>
             </div>
           )}
@@ -76,7 +80,7 @@ export default function AdminLogin() {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.4rem', color: 'var(--text-muted)' }}>
-                Username
+                Email or Username
               </label>
               <div style={{ position: 'relative' }}>
                 <input
@@ -85,7 +89,7 @@ export default function AdminLogin() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="form-input"
-                  placeholder="admin"
+                  placeholder="admin or user@example.com"
                   style={{ paddingLeft: '2.5rem' }}
                 />
                 <User size={18} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -121,9 +125,12 @@ export default function AdminLogin() {
             </button>
           </form>
 
-          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <div style={{ marginTop: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <a href="#/signup" style={{ color: '#ffda6b', fontSize: '0.9rem', fontWeight: '700', textDecoration: 'none' }}>
+              Need an Admin Account? Request Access →
+            </a>
             <a href="#/" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }}>
-              ← Return to Student Screen
+              ← Return to Participant Screen
             </a>
           </div>
         </div>
