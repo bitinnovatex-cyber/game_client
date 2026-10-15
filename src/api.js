@@ -1,7 +1,16 @@
 import { io } from 'socket.io-client';
 
-const API_BASE = import.meta.env.VITE_API_URL || (window.location.port === '3000' ? `http://${window.location.hostname}:5000` : '');
-const WS_BASE = import.meta.env.VITE_WS_URL || (window.location.port === '3000' ? `http://${window.location.hostname}:5000` : window.location.origin);
+// Read server URL from Vercel / Vite environment variables (supports server_url, VITE_SERVER_URL, VITE_API_URL)
+const rawServerUrl = 
+  import.meta.env.VITE_SERVER_URL ||
+  import.meta.env.server_url ||
+  import.meta.env.SERVER_URL ||
+  import.meta.env.VITE_API_URL ||
+  'https://game-server-domu.onrender.com';
+
+// Cleanly strip any trailing slash to prevent double-slash formatting
+export const API_BASE = (rawServerUrl || 'https://game-server-domu.onrender.com').replace(/\/+$/, '');
+export const WS_BASE = API_BASE;
 
 export function getToken() {
   return localStorage.getItem('kahoot_admin_token') || '';
