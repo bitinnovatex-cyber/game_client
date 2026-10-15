@@ -1,21 +1,34 @@
 /* =========================================================
-   Kahoot! Modern Design System & Component Styles
+   PS SkillSift Modern Design System & Component Styles
    ========================================================= */
 
 :root {
-  --kahoot-purple-dark: #130338;
-  --kahoot-purple-mid: #25076b;
-  --kahoot-purple-light: #46178f;
-  --kahoot-purple-glow: #864cbf;
+  --brand-purple-dark: #130338;
+  --brand-purple-mid: #25076b;
+  --brand-purple-light: #46178f;
+  --brand-purple-glow: #864cbf;
 
-  --kahoot-red: #e21b3c;
-  --kahoot-red-hover: #f02d4e;
-  --kahoot-blue: #1368ce;
-  --kahoot-blue-hover: #267ee6;
-  --kahoot-yellow: #d89e00;
-  --kahoot-yellow-hover: #f0b100;
-  --kahoot-green: #26890c;
-  --kahoot-green-hover: #33a812;
+  --brand-red: #e21b3c;
+  --brand-red-hover: #f02d4e;
+  --brand-blue: #1368ce;
+  --brand-blue-hover: #267ee6;
+  --brand-yellow: #d89e00;
+  --brand-yellow-hover: #f0b100;
+  --brand-green: #26890c;
+  --brand-green-hover: #33a812;
+
+  --kahoot-purple-dark: var(--brand-purple-dark);
+  --kahoot-purple-mid: var(--brand-purple-mid);
+  --kahoot-purple-light: var(--brand-purple-light);
+  --kahoot-purple-glow: var(--brand-purple-glow);
+  --kahoot-red: var(--brand-red);
+  --kahoot-red-hover: var(--brand-red-hover);
+  --kahoot-blue: var(--brand-blue);
+  --kahoot-blue-hover: var(--brand-blue-hover);
+  --kahoot-yellow: var(--brand-yellow);
+  --kahoot-yellow-hover: var(--brand-yellow-hover);
+  --kahoot-green: var(--brand-green);
+  --kahoot-green-hover: var(--brand-green-hover);
 
   --text-main: #ffffff;
   --text-muted: #d0c7e2;
@@ -148,7 +161,7 @@ body {
   background: var(--kahoot-red-hover);
 }
 
-/* Kahoot 4 Colors */
+/* PS SkillSift 4 Colors */
 .color-red {
   background-color: var(--kahoot-red) !important;
 }

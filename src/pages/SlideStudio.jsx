@@ -593,7 +593,7 @@ export default function SlideStudio({ quizId }) {
             </div>
 
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.4' }}>
-              Powered by <strong>Google Gemini</strong>. Enter a subject, paste syllabus notes, or give any topic to automatically generate Kahoot slides!
+              Powered by <strong>Google Gemini</strong>. Enter a subject, paste syllabus notes, or give any topic to automatically generate interactive quiz slides!
             </p>
 
             {aiError && (

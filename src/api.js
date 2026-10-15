@@ -20,18 +20,20 @@ export const API_BASE = rawServerUrl.replace(/\/+$/, '');
 export const WS_BASE = API_BASE;
 
 export function getToken() {
-  return localStorage.getItem('kahoot_admin_token') || '';
+  return localStorage.getItem('skillsift_admin_token') || localStorage.getItem('kahoot_admin_token') || '';
 }
 
 export function setToken(token) {
   if (token) {
-    localStorage.setItem('kahoot_admin_token', token);
+    localStorage.setItem('skillsift_admin_token', token);
   } else {
+    localStorage.removeItem('skillsift_admin_token');
     localStorage.removeItem('kahoot_admin_token');
   }
 }
 
 export function clearToken() {
+  localStorage.removeItem('skillsift_admin_token');
   localStorage.removeItem('kahoot_admin_token');
 }
 

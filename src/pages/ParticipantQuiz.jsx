@@ -36,12 +36,12 @@ const FUN_NAMES = [
 export default function ParticipantQuiz() {
   const [activeQuizInfo, setActiveQuizInfo] = useState(null);
   const [loadingActive, setLoadingActive] = useState(true);
-  const [nickname, setNickname] = useState(localStorage.getItem('kahoot_player_nick') || '');
+  const [nickname, setNickname] = useState(localStorage.getItem('skillsift_player_nick') || localStorage.getItem('kahoot_player_nick') || '');
   
   // Try restoring existing joined player from sessionStorage
   const [joinedPlayer, setJoinedPlayer] = useState(() => {
     try {
-      const saved = sessionStorage.getItem('kahoot_active_player');
+      const saved = sessionStorage.getItem('skillsift_active_player') || sessionStorage.getItem('kahoot_active_player');
       return saved ? JSON.parse(saved) : null;
     } catch (e) {
       return null;
@@ -50,7 +50,7 @@ export default function ParticipantQuiz() {
   
   // Game state: 'idle' | 'lobby' | 'intro' | 'question' | 'answered' | 'result' | 'leaderboard' | 'podium'
   const [gameState, setGameState] = useState(() => {
-    const saved = sessionStorage.getItem('kahoot_active_player');
+    const saved = sessionStorage.getItem('skillsift_active_player') || sessionStorage.getItem('kahoot_active_player');
     return saved ? 'lobby' : 'idle';
   });
   const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -73,8 +73,9 @@ export default function ParticipantQuiz() {
   useEffect(() => {
     joinedPlayerRef.current = joinedPlayer;
     if (joinedPlayer) {
-      sessionStorage.setItem('kahoot_active_player', JSON.stringify(joinedPlayer));
+      sessionStorage.setItem('skillsift_active_player', JSON.stringify(joinedPlayer));
     } else {
+      sessionStorage.removeItem('skillsift_active_player');
       sessionStorage.removeItem('kahoot_active_player');
     }
   }, [joinedPlayer]);
@@ -136,6 +137,7 @@ export default function ParticipantQuiz() {
             }
           } else {
             console.log('[Socket] Saved session is expired or inactive:', res?.error);
+            sessionStorage.removeItem('skillsift_active_player');
             sessionStorage.removeItem('kahoot_active_player');
             setJoinedPlayer(null);
             setGameState('idle');
@@ -218,6 +220,7 @@ export default function ParticipantQuiz() {
       console.log('Kicked from game:', data);
       setGameState('kicked');
       setJoinedPlayer(null);
+      sessionStorage.removeItem('skillsift_active_player');
       sessionStorage.removeItem('kahoot_active_player');
       sound.playWrong();
     });
@@ -226,6 +229,7 @@ export default function ParticipantQuiz() {
       setGameState('idle');
       setJoinedPlayer(null);
       setActiveQuizInfo(null);
+      sessionStorage.removeItem('skillsift_active_player');
       sessionStorage.removeItem('kahoot_active_player');
     });
 
@@ -256,7 +260,7 @@ export default function ParticipantQuiz() {
 
     const socket = getSocket();
     const cleanNick = nickname.trim();
-    localStorage.setItem('kahoot_player_nick', cleanNick);
+    localStorage.setItem('skillsift_player_nick', cleanNick);
 
     const saved = joinedPlayerRef.current;
     socket.emit('join-lobby', {
@@ -332,6 +336,7 @@ export default function ParticipantQuiz() {
           <button
             onClick={() => {
               setGameState('idle');
+              sessionStorage.removeItem('skillsift_active_player');
               sessionStorage.removeItem('kahoot_active_player');
             }}
             className="btn btn-primary"
@@ -352,7 +357,7 @@ export default function ParticipantQuiz() {
       <div className="app-container" style={{ justifyContent: 'space-between' }}>
         <header className="navbar">
           <div className="brand-logo">
-            <span>Kahoot!</span>
+            <span>PS SkillSift</span>
             <span className="brand-badge">Live</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -399,7 +404,7 @@ export default function ParticipantQuiz() {
         </main>
 
         <footer style={{ textAlign: 'center', padding: '1.5rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
-          Kahoot! Real-Time Engine • High Performance WebSockets
+          PS SkillSift • Real-Time Live Quiz Engine
         </footer>
       </div>
     );
@@ -430,7 +435,7 @@ export default function ParticipantQuiz() {
       <div className="app-container">
         <header className="navbar">
           <div className="brand-logo">
-            <span>Kahoot!</span>
+            <span>PS SkillSift</span>
             <span className="brand-badge">PIN: {activeQuizInfo?.pin || '---'}</span>
           </div>
           <SoundToggle />
@@ -501,7 +506,7 @@ export default function ParticipantQuiz() {
       <div className="app-container">
         <header className="navbar">
           <div className="brand-logo">
-            <span>Kahoot!</span>
+            <span>PS SkillSift</span>
             <span className="brand-badge">Lobby</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -791,7 +796,7 @@ export default function ParticipantQuiz() {
       <div className="app-container">
         <header className="navbar">
           <div className="brand-logo">
-            <span>Kahoot!</span>
+            <span>PS SkillSift</span>
             <span className="brand-badge">Scoreboard</span>
           </div>
           <SoundToggle />
@@ -904,6 +909,7 @@ export default function ParticipantQuiz() {
 
           <button
             onClick={() => {
+              sessionStorage.removeItem('skillsift_active_player');
               sessionStorage.removeItem('kahoot_active_player');
               setGameState('idle');
               setJoinedPlayer(null);
@@ -933,6 +939,7 @@ export default function ParticipantQuiz() {
         </p>
         <button 
           onClick={() => {
+            sessionStorage.removeItem('skillsift_active_player');
             sessionStorage.removeItem('kahoot_active_player');
             setJoinedPlayer(null);
             setGameState('idle');

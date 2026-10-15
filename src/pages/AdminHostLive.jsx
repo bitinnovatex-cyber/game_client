@@ -741,7 +741,7 @@ export default function AdminHostLive({ sessionId }) {
       <div className="app-container" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem 2rem' }}>
         <header style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="brand-logo">
-            <span>Kahoot!</span>
+            <span>PS SkillSift</span>
             <span className="brand-badge">Podium</span>
           </div>
 

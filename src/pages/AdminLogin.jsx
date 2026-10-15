@@ -39,7 +39,7 @@ export default function AdminLogin() {
     <div className="app-container">
       <header className="navbar">
         <a href="#/" className="brand-logo">
-          <span>Kahoot!</span>
+          <span>PS SkillSift</span>
           <span className="brand-badge">Admin</span>
         </a>
         <SoundToggle />

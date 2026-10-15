@@ -108,7 +108,7 @@ export default function AdminDashboard() {
       {/* Top Navbar */}
       <header className="navbar">
         <div className="brand-logo">
-          <span>Kahoot!</span>
+          <span>PS SkillSift</span>
           <span className="brand-badge">Host Hub</span>
         </div>
 

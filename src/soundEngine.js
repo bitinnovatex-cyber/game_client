@@ -1,10 +1,10 @@
-// Web Audio API Synthesizer for Kahoot-style real-time audio
+// Web Audio API Synthesizer for PS SkillSift real-time audio
 // Zero external assets or network requests - runs 100% locally with high performance
 
 class SoundEngine {
   constructor() {
     this.ctx = null;
-    this.muted = localStorage.getItem('kahoot_muted') === 'true';
+    this.muted = (localStorage.getItem('skillsift_muted') || localStorage.getItem('kahoot_muted')) === 'true';
     this.bgInterval = null;
     this.bgPlaying = false;
   }
@@ -27,7 +27,7 @@ class SoundEngine {
 
   toggleMute() {
     this.muted = !this.muted;
-    localStorage.setItem('kahoot_muted', this.muted);
+    localStorage.setItem('skillsift_muted', this.muted);
     if (this.muted && this.bgPlaying) {
       this.stopLobbyMusic();
     }
