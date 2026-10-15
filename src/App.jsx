@@ -1,3 +1,4 @@
+// Version 1.0 - Stable Baseline Release
 import React, { useState, useEffect } from 'react';
 import ParticipantQuiz from './pages/ParticipantQuiz';
 import AdminLogin from './pages/AdminLogin';
