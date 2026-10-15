@@ -134,6 +134,12 @@ export default function ParticipantQuiz() {
                 setGameState('answered');
               }
             }
+          } else {
+            console.log('[Socket] Saved session is expired or inactive:', res?.error);
+            sessionStorage.removeItem('kahoot_active_player');
+            setJoinedPlayer(null);
+            setGameState('idle');
+            checkActiveQuiz();
           }
         });
       }

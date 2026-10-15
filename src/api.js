@@ -1,15 +1,22 @@
 import { io } from 'socket.io-client';
 
 // Read server URL from Vercel / Vite environment variables (supports server_url, VITE_SERVER_URL, VITE_API_URL)
-const rawServerUrl = 
+let rawServerUrl = 
   import.meta.env.VITE_SERVER_URL ||
   import.meta.env.server_url ||
   import.meta.env.SERVER_URL ||
   import.meta.env.VITE_API_URL ||
-  'https://game-server-domu.onrender.com';
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:5000'
+    : 'https://game-server-domu.onrender.com');
+
+// If localhost was configured with https://, safely switch to http:// (local Node does not have SSL)
+if (rawServerUrl.startsWith('https://localhost') || rawServerUrl.startsWith('https://127.0.0.1')) {
+  rawServerUrl = rawServerUrl.replace('https://', 'http://');
+}
 
 // Cleanly strip any trailing slash to prevent double-slash formatting
-export const API_BASE = (rawServerUrl || 'https://game-server-domu.onrender.com').replace(/\/+$/, '');
+export const API_BASE = rawServerUrl.replace(/\/+$/, '');
 export const WS_BASE = API_BASE;
 
 export function getToken() {
